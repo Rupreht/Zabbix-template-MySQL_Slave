@@ -1,0 +1,85 @@
+zabbix_export:
+  version: '6.0'
+  date: '2022-04-29T21:21:59Z'
+  groups:
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: 6d417d312064469282460318a7e9b793
+      template: Template_MySQL_Slave
+      name: Template_MySQL_Slave
+      groups:
+        -
+          name: Templates
+      items:
+        -
+          uuid: 75250ff282e941939cfc11790cc19f61
+          name: 'MySQL: Seconds Behind Master'
+          key: 'mysql.slave[Seconds_Behind_Master]'
+          history: 1w
+          units: s
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: MySQL
+          triggers:
+            -
+              uuid: 4ce186da02d4485aa3f68df4305d7f9d
+              expression: 'min(/Template_MySQL_Slave/mysql.slave[Seconds_Behind_Master],#5)>120'
+              name: 'MySQL: Replication slowed down'
+              priority: HIGH
+        -
+          uuid: e3377c8fa126479a8eb16282fcb3f4b2
+          name: 'MySQL: Slave IO Running'
+          key: 'mysql.slave[Slave_IO_Running]'
+          history: 1w
+          preprocessing:
+            -
+              type: REGEX
+              parameters:
+                - '[Yy][Ee][Ss]'
+                - '1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: MySQL
+        -
+          uuid: b553de2755474e6d8834d1d2784b457a
+          name: 'MySQL: Slave SQL Running'
+          key: 'mysql.slave[Slave_SQL_Running]'
+          history: 1w
+          preprocessing:
+            -
+              type: REGEX
+              parameters:
+                - '[Yy][Ee][Ss]'
+                - '1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: MySQL
+  triggers:
+    -
+      uuid: 51f2579623024502906e32769f3c7697
+      expression: 'last(/Template_MySQL_Slave/mysql.slave[Slave_IO_Running])=0 or last(/Template_MySQL_Slave/mysql.slave[Slave_SQL_Running])=0'
+      name: 'MySQL: Replication not running'
+      priority: DISASTER
+  graphs:
+    -
+      uuid: 23b421813ba84334a609299f46ead8e5
+      name: 'Seconds Behind Master'
+      graph_items:
+        -
+          color: 1A7C11
+          item:
+            host: Template_MySQL_Slave
+            key: 'mysql.slave[Seconds_Behind_Master]'
